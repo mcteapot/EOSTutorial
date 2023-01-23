@@ -76,3 +76,6 @@ DerivedDataCache/*
 # Folders to ingnore inside the content 
 Content/StarterContent/*
 Content/Characters/*
+
+# Folders to ingnore inside the Plugins 
+Plugins/Developer/*
