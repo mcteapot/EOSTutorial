@@ -20,5 +20,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EOS")
 	void LoginWithEOS(FString ID, FString Token, FString LoginType);
 
+	/** Gets player user name if logged in to EOS */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "EOS")
+	FString GetPlayerUsername();
+
+	/** Gets player is logged in */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "EOS")
+	bool IsPlayerLoggedIn();	
+	
+	/** Return calls for after trying to connect for LoginWithEOS */
 	void LoginWithEOSReturn(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error); 
 };

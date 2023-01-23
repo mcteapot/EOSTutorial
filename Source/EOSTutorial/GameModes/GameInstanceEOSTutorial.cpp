@@ -25,8 +25,37 @@ void UGameInstanceEOSTutorial::LoginWithEOS(FString ID, FString Token, FString L
 	}
 }
 
+FString UGameInstanceEOSTutorial::GetPlayerUsername()
+{
+	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+	if (subsystemRef)
+	{
+		IOnlineIdentityPtr identityInterface = subsystemRef->GetIdentityInterface();
+		if (identityInterface.IsValid())
+		{
+			FString username = identityInterface->GetPlayerNickname(0);
+			return username;
+		}
+	}
+	return FString(); // returns empty string if no username is not logged in
+}
+
+bool UGameInstanceEOSTutorial::IsPlayerLoggedIn()
+{
+	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+	if (subsystemRef)
+	{
+		IOnlineIdentityPtr identityInterface = subsystemRef->GetIdentityInterface();
+		if (identityInterface.IsValid())
+		{
+			return identityInterface->GetLoginStatus(0) == ELoginStatus::LoggedIn;
+		}
+	}
+	return false; // returns false if no username is not logged in
+}
+
 void UGameInstanceEOSTutorial::LoginWithEOSReturn(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
-	const FString& Error)
+                                                  const FString& Error)
 {
 	if(bWasSuccessful)
 	{
