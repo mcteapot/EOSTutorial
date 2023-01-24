@@ -22,6 +22,10 @@ public:
 
 	/* Session search results ID */
 	TShaderRef<FOnlineSessionSearch> SessionSearch;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite , Category = "EOS|Properties")
+	FString OpenLevelLocationText;
+
 
 	
 	/* LOGIN BLUEPRINT CALLABLE API */

@@ -5,6 +5,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 void UGameInstanceEOSTutorial::LoginWithEOS(FString ID, FString Token, FString LoginType)
 {
@@ -57,6 +58,29 @@ bool UGameInstanceEOSTutorial::IsPlayerLoggedIn()
 void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bIsLanServer,
 	int32 NumberOfPuglicConnections)
 {
+	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+	if (subsystemRef)
+	{
+		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
+		if(SessionPtrRef.IsValid())
+		{
+			FOnlineSessionSettings SessionCreationInfo;
+			//Setting properteis of sessions struct
+			SessionCreationInfo.bIsDedicated = bIsDedicatedServer;
+			SessionCreationInfo.bAllowInvites = true;
+			SessionCreationInfo.bIsLANMatch = bIsLanServer;
+			SessionCreationInfo.NumPublicConnections = NumberOfPuglicConnections;
+			SessionCreationInfo.bUseLobbiesIfAvailable = false;
+			SessionCreationInfo.bUsesPresence = false; // look up
+			SessionCreationInfo.bShouldAdvertise = true;
+			SessionCreationInfo.Set(SEARCH_KEYWORDS, FString("RandomHi"), EOnlineDataAdvertisementType::ViaOnlineService);
+
+			//Creating session
+			SessionPtrRef->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnCreateSessionComplete);
+			SessionPtrRef->CreateSession(0, FName("MainSession"), SessionCreationInfo);
+		}
+		
+	}
 }
 
 void UGameInstanceEOSTutorial::FindSessionAndJoin()
@@ -83,6 +107,10 @@ void UGameInstanceEOSTutorial::LoginWithEOSReturn(int32 LocalUserNum, bool bWasS
 
 void UGameInstanceEOSTutorial::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	if(bWasSuccessful)
+	{
+		GetWorld()->ServerTravel(OpenLevelLocationText);
+	}
 }
 
 void UGameInstanceEOSTutorial::OnFindSessionsComplete(bool bWasSuccessful)
