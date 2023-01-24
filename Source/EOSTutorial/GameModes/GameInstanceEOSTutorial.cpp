@@ -54,6 +54,20 @@ bool UGameInstanceEOSTutorial::IsPlayerLoggedIn()
 	return false; // returns false if no username is not logged in
 }
 
+void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bIsLanServer,
+	int32 NumberOfPuglicConnections)
+{
+}
+
+void UGameInstanceEOSTutorial::FindSessionAndJoin()
+{
+}
+
+void UGameInstanceEOSTutorial::JoinSession()
+{
+}
+
+
 void UGameInstanceEOSTutorial::LoginWithEOSReturn(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
                                                   const FString& Error)
 {
@@ -65,4 +79,16 @@ void UGameInstanceEOSTutorial::LoginWithEOSReturn(int32 LocalUserNum, bool bWasS
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Login Failed - %S"), *Error);
 	}
+}
+
+void UGameInstanceEOSTutorial::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+}
+
+void UGameInstanceEOSTutorial::OnFindSessionsComplete(bool bWasSuccessful)
+{
+}
+
+void UGameInstanceEOSTutorial::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
 }
