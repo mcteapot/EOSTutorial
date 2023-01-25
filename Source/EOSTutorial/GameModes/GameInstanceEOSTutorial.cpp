@@ -68,10 +68,10 @@ void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bI
 			//Setting properteis of sessions struct
 			SessionCreationInfo.bIsDedicated = bIsDedicatedServer;
 			SessionCreationInfo.bAllowInvites = true;
-			SessionCreationInfo.bIsLANMatch = bIsLanServer;
+			SessionCreationInfo.bIsLANMatch = bIsLanServer; // When set to true will not create online session
 			SessionCreationInfo.NumPublicConnections = NumberOfPuglicConnections;
-			SessionCreationInfo.bUseLobbiesIfAvailable = false;
-			SessionCreationInfo.bUsesPresence = false; // look up
+			SessionCreationInfo.bUseLobbiesIfAvailable = true; 
+			SessionCreationInfo.bUsesPresence = false; 
 			SessionCreationInfo.bShouldAdvertise = true;
 			SessionCreationInfo.Set(SEARCH_KEYWORDS, FString("RandomHi"), EOnlineDataAdvertisementType::ViaOnlineService);
 
