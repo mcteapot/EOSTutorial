@@ -5,5 +5,7 @@
 
 void AEOSPlayerControllerSessions::OnNetCleanup(UNetConnection* Connection)
 {
+
+	// Super should be called last
 	Super::OnNetCleanup(Connection);
 }
