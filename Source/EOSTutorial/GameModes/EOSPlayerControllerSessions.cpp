@@ -13,7 +13,7 @@ void AEOSPlayerControllerSessions::OnNetCleanup(UNetConnection* Connection)
 
 	if(GameInstanceRef)
 	{
-		GameInstanceRef->DestorySession();
+		GameInstanceRef->DestroySession(); // Need to have a way to see if the player is host or not
 	}
 	
 	// Super should be called last

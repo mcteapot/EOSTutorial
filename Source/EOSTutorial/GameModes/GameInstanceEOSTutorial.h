@@ -32,6 +32,7 @@ public:
 	UPROPERTY( BlueprintReadWrite , Category = "EOS|Properties")
 	FString EOSSessionKeyword = "EOSTutorial";
 
+	UGameInstanceEOSTutorial();
 	
 	/* LOGIN BLUEPRINT CALLABLE API */
 	
@@ -69,12 +70,12 @@ public:
 	
 	/** Joins sessions */
 	UFUNCTION(BlueprintCallable, Category = "EOS")
-	void DestorySession();
+	void DestroySession();
 	
 	/* RETURN REFRENCE API */
 	
 	/** Return calls for after trying to connect for LoginWithEOS */
-	void LoginWithEOSReturn(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
+	void LoginWithEOSComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error);
 
 	/** Return for on create session compleated */
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
@@ -87,4 +88,10 @@ public:
 
 	/** Return for joining a session */
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+protected:
+
+	/* VARABLES */
+
+	// Checks to see if is logged into to EOS
+	bool bIsLoggedIn;
 };

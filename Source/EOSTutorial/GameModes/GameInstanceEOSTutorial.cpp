@@ -7,6 +7,11 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Kismet/GameplayStatics.h"
 
+UGameInstanceEOSTutorial::UGameInstanceEOSTutorial()
+{
+	bIsLoggedIn = false;
+}
+
 void UGameInstanceEOSTutorial::LoginWithEOS(FString ID, FString Token, FString LoginType)
 {
 	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
@@ -20,7 +25,7 @@ void UGameInstanceEOSTutorial::LoginWithEOS(FString ID, FString Token, FString L
 			AccountDetails.Token = Token;
 			AccountDetails.Type = LoginType;
 			
-			IdentityPtr->OnLoginCompleteDelegates->AddUObject(this, &UGameInstanceEOSTutorial::LoginWithEOSReturn);
+			IdentityPtr->OnLoginCompleteDelegates->AddUObject(this, &UGameInstanceEOSTutorial::LoginWithEOSComplete);
 			IdentityPtr->Login(0, AccountDetails);
 		}
 	}
@@ -111,7 +116,7 @@ void UGameInstanceEOSTutorial::JoinSession()
 {
 }
 
-void UGameInstanceEOSTutorial::DestorySession()
+void UGameInstanceEOSTutorial::DestroySession()
 {
 	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
 	if (OnlineSubystem)
@@ -126,16 +131,41 @@ void UGameInstanceEOSTutorial::DestorySession()
 }
 
 
-void UGameInstanceEOSTutorial::LoginWithEOSReturn(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
+void UGameInstanceEOSTutorial::LoginWithEOSComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
                                                   const FString& Error)
 {
 	if(bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Login Successful"));
+		IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+		if (OnlineSubystem)
+		{
+			IOnlineIdentityPtr IdentityPtr = OnlineSubystem->GetIdentityInterface();
+			if (IdentityPtr.IsValid())
+			{
+				switch (IdentityPtr->GetLoginStatus(0))
+				{
+				case ELoginStatus::LoggedIn : bIsLoggedIn = true; break;
+				case ELoginStatus::NotLoggedIn : bIsLoggedIn = false; break;
+				default : bIsLoggedIn = false;
+				}
+			
+				IdentityPtr->ClearOnLoginCompleteDelegates(0, this);
+			}
+		}
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Login Failed - %S"), *Error);
+		IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+		if (OnlineSubystem)
+		{
+			IOnlineIdentityPtr IdentityPtr = OnlineSubystem->GetIdentityInterface();
+			if (IdentityPtr.IsValid())
+			{
+				IdentityPtr->ClearOnLoginCompleteDelegates(0, this);		
+			}
+		}
 	}
 }
 
