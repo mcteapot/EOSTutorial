@@ -9,32 +9,32 @@
 
 void UGameInstanceEOSTutorial::LoginWithEOS(FString ID, FString Token, FString LoginType)
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineIdentityPtr identityInterface = subsystemRef->GetIdentityInterface();
-		if (identityInterface.IsValid())
+		IOnlineIdentityPtr IdentityPtr = OnlineSubystem->GetIdentityInterface();
+		if (IdentityPtr.IsValid())
 		{
 			FOnlineAccountCredentials AccountDetails;
 			AccountDetails.Id = ID;
 			AccountDetails.Token = Token;
 			AccountDetails.Type = LoginType;
 			
-			identityInterface->OnLoginCompleteDelegates->AddUObject(this, &UGameInstanceEOSTutorial::LoginWithEOSReturn);
-			identityInterface->Login(0, AccountDetails);
+			IdentityPtr->OnLoginCompleteDelegates->AddUObject(this, &UGameInstanceEOSTutorial::LoginWithEOSReturn);
+			IdentityPtr->Login(0, AccountDetails);
 		}
 	}
 }
 
 FString UGameInstanceEOSTutorial::GetPlayerUsername()
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineIdentityPtr identityInterface = subsystemRef->GetIdentityInterface();
-		if (identityInterface.IsValid())
+		IOnlineIdentityPtr IdentityPtr = OnlineSubystem->GetIdentityInterface();
+		if (IdentityPtr.IsValid())
 		{
-			FString username = identityInterface->GetPlayerNickname(0);
+			FString username = IdentityPtr->GetPlayerNickname(0);
 			return username;
 		}
 	}
@@ -43,13 +43,13 @@ FString UGameInstanceEOSTutorial::GetPlayerUsername()
 
 bool UGameInstanceEOSTutorial::IsPlayerLoggedIn()
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineIdentityPtr identityInterface = subsystemRef->GetIdentityInterface();
-		if (identityInterface.IsValid())
+		IOnlineIdentityPtr IdentityPtr = OnlineSubystem->GetIdentityInterface();
+		if (IdentityPtr.IsValid())
 		{
-			return identityInterface->GetLoginStatus(0) == ELoginStatus::LoggedIn;
+			return IdentityPtr->GetLoginStatus(0) == ELoginStatus::LoggedIn;
 		}
 	}
 	return false; // returns false if no username is not logged in
@@ -58,27 +58,28 @@ bool UGameInstanceEOSTutorial::IsPlayerLoggedIn()
 void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bIsLanServer,
 	int32 NumberOfPuglicConnections)
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
-		if(SessionPtrRef.IsValid())
+		IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface();
+		if(SessionPtr.IsValid())
 		{
-			FOnlineSessionSettings SessionCreationInfo;
+			FOnlineSessionSettings SessionSettings;
 			//Setting properteis of sessions struct
-			SessionCreationInfo.bIsDedicated = bIsDedicatedServer;
-			SessionCreationInfo.bAllowInvites = true;
-			SessionCreationInfo.bIsLANMatch = bIsLanServer; // When set to true will not create online session
-			SessionCreationInfo.NumPublicConnections = NumberOfPuglicConnections;
-			SessionCreationInfo.bUseLobbiesIfAvailable = true; 
-			SessionCreationInfo.bUsesPresence = false; 
-			SessionCreationInfo.bShouldAdvertise = true;
-			SessionCreationInfo.Set(SEARCH_KEYWORDS, FString("RandomHi"), EOnlineDataAdvertisementType::ViaOnlineService);
-
+			SessionSettings.bIsDedicated = bIsDedicatedServer;
+			SessionSettings.bShouldAdvertise = true;
+			SessionSettings.bIsLANMatch = bIsLanServer;
+			SessionSettings.NumPublicConnections = NumberOfPuglicConnections;
+			SessionSettings.bAllowJoinInProgress = true;
+			SessionSettings.bAllowJoinViaPresence = true;
+			SessionSettings.bUsesPresence = true;
+			SessionSettings.bUseLobbiesIfAvailable = true;
+			SessionSettings.Set(SEARCH_KEYWORDS, EOSSessionKeyword, EOnlineDataAdvertisementType::ViaOnlineService);
+			
 			//Creating session
-			SessionPtrRef->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnCreateSessionComplete);
-			SessionPtrRef->CreateSession(0, EOSSessionName, SessionCreationInfo);
-			//SessionPtrRef->CreateSession(0, FName("MainSession"), SessionCreationInfo);
+			SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnCreateSessionComplete);
+			SessionPtr->CreateSession(0, EOSSessionName, SessionSettings);
+			//SessionPtr->CreateSession(0, FName("MainSession"), SessionCreationInfo);
 		}
 		
 	}
@@ -86,23 +87,22 @@ void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bI
 
 void UGameInstanceEOSTutorial::FindSessionAndJoin()
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
-		if(SessionPtrRef.IsValid())
+		IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface();
+		if(SessionPtr.IsValid())
 		{
 			//Searching for lobbies, flase for nomral match making session 
 			SessionSearch = MakeShareable(new FOnlineSessionSearch());
-			//SessionSearch->QuerySettings.Set(SEARCH_KEYWORDS, EOSSessionName.ToString(), EOnlineComparisonOp::Equals);
-			SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, false, EOnlineComparisonOp::Equals); // Was set to false 
-			SessionSearch->bIsLanQuery = false;
-			SessionSearch->MaxSearchResults = 20;
+			SessionSearch->MaxSearchResults = 5000;
+			SessionSearch->QuerySettings.Set(SEARCH_KEYWORDS, EOSSessionKeyword, EOnlineComparisonOp::Equals);
+			SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 			//SessionSearch->QuerySettings.SearchParams.Empty();
 
 			// Setting the delegate for when the search is complete and calling the search function to find session
-			SessionPtrRef->OnFindSessionsCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnFindSessionComplete);
-			SessionPtrRef->FindSessions(0, SessionSearch.ToSharedRef());
+			SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnFindSessionComplete);
+			SessionPtr->FindSessions(0, SessionSearch.ToSharedRef());
 		}
 	}
 }
@@ -113,14 +113,14 @@ void UGameInstanceEOSTutorial::JoinSession()
 
 void UGameInstanceEOSTutorial::DestorySession()
 {
-	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-	if (subsystemRef)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
-		if(SessionPtrRef.IsValid())
+		IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface();
+		if(SessionPtr.IsValid())
 		{
-			SessionPtrRef->OnDestroySessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnDestroySessionComplete);
-			SessionPtrRef->DestroySession(EOSSessionName);
+			SessionPtr->OnDestroySessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnDestroySessionComplete);
+			SessionPtr->DestroySession(EOSSessionName);
 		}
 	}
 }
@@ -166,26 +166,31 @@ void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Looking For Session"));
 		// If session is found then join it
-		IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-		if (subsystemRef)
+		IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+		if (OnlineSubystem)
 		{
-			IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
-			if(SessionPtrRef.IsValid())
+			IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface();
+			if(SessionPtr.IsValid())
 			{
 				// Join first session that is found
 				UE_LOG(LogTemp, Warning, TEXT("Sessions Found - %d"), SessionSearch->SearchResults.Num());
-				if(SessionSearch->SearchResults.Num() > 0)
+				if(SessionSearch->SearchResults.Num())
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Found Session"));
-					SessionPtrRef->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
-					SessionPtrRef->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
-					/*
+					SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
+					SessionPtr->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
+					
 					if(SessionSearch->SearchResults[0].IsValid())
 					{
-						SessionPtrRef->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
-						SessionPtrRef->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
+						/*
+						SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
+						SessionPtr->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
+						*/
+						SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
+						SessionPtr->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
 					}
-					*/
+					
+
 				}
 				else
 				{
@@ -194,7 +199,7 @@ void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
 					CreateEOSSession(false, false, 10);
 				}
 				//Cears the session find delegate
-				SessionPtrRef->ClearOnFindSessionsCompleteDelegates(this);
+				SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
 			}
 		}
 	}
@@ -208,35 +213,21 @@ void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
 
 void UGameInstanceEOSTutorial::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-
-	// What happens when the session is joined
-	if(Result == EOnJoinSessionCompleteResult::Success)
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
 	{
-		// Get the player controller
-		APlayerController *PlayerControllerRef  = UGameplayStatics::GetPlayerController(GetWorld(),0);
-		if(PlayerControllerRef)
+		if (IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface())
 		{
-			FString JoinAddress;
-			IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
-			if (subsystemRef)
+			FString ConnectionInfo = FString();
+			SessionPtr->GetResolvedConnectString(SessionName, ConnectionInfo);
+			if (!ConnectionInfo.IsEmpty())
 			{
-				IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
-				if(SessionPtrRef.IsValid())
+				if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 				{
-					// Get the resolved connect string
-					SessionPtrRef->GetResolvedConnectString(SessionName, JoinAddress);
-					UE_LOG(LogTemp, Warning, TEXT("Join Address is %S"), *JoinAddress)
-					if(!JoinAddress.IsEmpty())
-					{
-						PlayerControllerRef->ClientTravel(SessionName.ToString(), ETravelType::TRAVEL_Absolute);
-					}
+					PC->ClientTravel(ConnectionInfo, ETravelType::TRAVEL_Absolute);
 				}
 			}
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Session Join Failed"));
 	}
 	
 }

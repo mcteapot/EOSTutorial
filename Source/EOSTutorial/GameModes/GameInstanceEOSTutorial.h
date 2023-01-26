@@ -29,6 +29,9 @@ public:
 	UPROPERTY( BlueprintReadWrite , Category = "EOS|Properties")
 	FName EOSSessionName = "MainSession";
 
+	UPROPERTY( BlueprintReadWrite , Category = "EOS|Properties")
+	FString EOSSessionKeyword = "EOSTutorial";
+
 	
 	/* LOGIN BLUEPRINT CALLABLE API */
 	
