@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "EOSGameModeSessions.h"
+
+#include "GameInstanceEOSTutorial.h"
 #include "OnlineSubsystemUtils.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "OnlineSubsystem.h"
+
 
 
 
@@ -52,8 +55,17 @@ void AEOSGameModeSessions::PostLogin(APlayerController* NewPlayer)
 		IOnlineSessionPtr SessionRef = SubsystemRef->GetSessionInterface();
 
 		// MainSession is what we created in the GameInstance when creating session 
+		FName SessionNameToRegistar = FName("MainSession");
+		UGameInstanceEOSTutorial *GameInstanceRef = Cast<UGameInstanceEOSTutorial>(GetWorld()->GetGameInstance());
+		if (GameInstanceRef)
+		{
+			// Gets the session name from the game instance
+			SessionNameToRegistar = GameInstanceRef->EOSSessionName;
+		}
+
 		// Bool to cehck if sessions was regstred with the session
-		bool bRegistrationSuccess = SessionRef->RegisterPlayer(FName("MainSession"), *UniqueNetId, true);
+		bool bRegistrationSuccess = SessionRef->RegisterPlayer(SessionNameToRegistar, *UniqueNetId, true);
+		
 		if(bRegistrationSuccess)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player Registered Succesful"));

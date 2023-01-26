@@ -21,11 +21,13 @@ public:
 	/* VARABLES */
 
 	/* Session search results ID */
-	TShaderRef<FOnlineSessionSearch> SessionSearch;
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite , Category = "EOS|Properties")
 	FString OpenLevelLocationText;
 
+	UPROPERTY( BlueprintReadWrite , Category = "EOS|Properties")
+	FName EOSSessionName = "MainSession";
 
 	
 	/* LOGIN BLUEPRINT CALLABLE API */
@@ -62,7 +64,9 @@ public:
 	void JoinSession();
 	//void JoinSession(int32 SessionIndex);
 	
-
+	/** Joins sessions */
+	UFUNCTION(BlueprintCallable, Category = "EOS")
+	void DestorySession();
 	
 	/* RETURN REFRENCE API */
 	
@@ -72,8 +76,11 @@ public:
 	/** Return for on create session compleated */
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
+	/** Return for on destroy session compleated */
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+	
 	/** Return finding a session */
-	void OnFindSessionsComplete(bool bWasSuccessful);
+	void OnFindSessionComplete(bool bWasSuccessful);
 
 	/** Return for joining a session */
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);

@@ -77,7 +77,8 @@ void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bI
 
 			//Creating session
 			SessionPtrRef->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnCreateSessionComplete);
-			SessionPtrRef->CreateSession(0, FName("MainSession"), SessionCreationInfo);
+			SessionPtrRef->CreateSession(0, EOSSessionName, SessionCreationInfo);
+			//SessionPtrRef->CreateSession(0, FName("MainSession"), SessionCreationInfo);
 		}
 		
 	}
@@ -85,10 +86,43 @@ void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bI
 
 void UGameInstanceEOSTutorial::FindSessionAndJoin()
 {
+	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+	if (subsystemRef)
+	{
+		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
+		if(SessionPtrRef.IsValid())
+		{
+			//Searching for lobbies, flase for nomral match making session 
+			SessionSearch = MakeShareable(new FOnlineSessionSearch());
+			//SessionSearch->QuerySettings.Set(SEARCH_KEYWORDS, EOSSessionName.ToString(), EOnlineComparisonOp::Equals);
+			SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, false, EOnlineComparisonOp::Equals); // Was set to false 
+			SessionSearch->bIsLanQuery = false;
+			SessionSearch->MaxSearchResults = 20;
+			//SessionSearch->QuerySettings.SearchParams.Empty();
+
+			// Setting the delegate for when the search is complete and calling the search function to find session
+			SessionPtrRef->OnFindSessionsCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnFindSessionComplete);
+			SessionPtrRef->FindSessions(0, SessionSearch.ToSharedRef());
+		}
+	}
 }
 
 void UGameInstanceEOSTutorial::JoinSession()
 {
+}
+
+void UGameInstanceEOSTutorial::DestorySession()
+{
+	IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+	if (subsystemRef)
+	{
+		IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
+		if(SessionPtrRef.IsValid())
+		{
+			SessionPtrRef->OnDestroySessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnDestroySessionComplete);
+			SessionPtrRef->DestroySession(EOSSessionName);
+		}
+	}
 }
 
 
@@ -110,13 +144,99 @@ void UGameInstanceEOSTutorial::OnCreateSessionComplete(FName SessionName, bool b
 	if(bWasSuccessful)
 	{
 		GetWorld()->ServerTravel(OpenLevelLocationText);
+		UE_LOG(LogTemp, Warning, TEXT("Session Sreatedd And Server Travel"));
 	}
 }
 
-void UGameInstanceEOSTutorial::OnFindSessionsComplete(bool bWasSuccessful)
+void UGameInstanceEOSTutorial::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	if(bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Session Destroyed"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Session Destory Failed"));
+	}
+}
+
+void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
+{
+	if(bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Looking For Session"));
+		// If session is found then join it
+		IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+		if (subsystemRef)
+		{
+			IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
+			if(SessionPtrRef.IsValid())
+			{
+				// Join first session that is found
+				UE_LOG(LogTemp, Warning, TEXT("Sessions Found - %d"), SessionSearch->SearchResults.Num());
+				if(SessionSearch->SearchResults.Num() > 0)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Found Session"));
+					SessionPtrRef->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
+					SessionPtrRef->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
+					/*
+					if(SessionSearch->SearchResults[0].IsValid())
+					{
+						SessionPtrRef->OnJoinSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnJoinSessionComplete);
+						SessionPtrRef->JoinSession(0, EOSSessionName, SessionSearch->SearchResults[0]);
+					}
+					*/
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("No Session Found"));
+					// IF no session is found then create one
+					CreateEOSSession(false, false, 10);
+				}
+				//Cears the session find delegate
+				SessionPtrRef->ClearOnFindSessionsCompleteDelegates(this);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Find Session Failed"));
+		// IF no session is found then create one
+		CreateEOSSession(false, false, 10);
+	}
 }
 
 void UGameInstanceEOSTutorial::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
+
+	// What happens when the session is joined
+	if(Result == EOnJoinSessionCompleteResult::Success)
+	{
+		// Get the player controller
+		APlayerController *PlayerControllerRef  = UGameplayStatics::GetPlayerController(GetWorld(),0);
+		if(PlayerControllerRef)
+		{
+			FString JoinAddress;
+			IOnlineSubsystem *subsystemRef = Online::GetSubsystem(this->GetWorld());
+			if (subsystemRef)
+			{
+				IOnlineSessionPtr SessionPtrRef = subsystemRef->GetSessionInterface();
+				if(SessionPtrRef.IsValid())
+				{
+					// Get the resolved connect string
+					SessionPtrRef->GetResolvedConnectString(SessionName, JoinAddress);
+					UE_LOG(LogTemp, Warning, TEXT("Join Address is %S"), *JoinAddress)
+					if(!JoinAddress.IsEmpty())
+					{
+						PlayerControllerRef->ClientTravel(SessionName.ToString(), ETravelType::TRAVEL_Absolute);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Session Join Failed"));
+	}
+	
 }
