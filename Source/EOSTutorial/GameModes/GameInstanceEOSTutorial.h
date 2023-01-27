@@ -71,6 +71,14 @@ public:
 	/** Joins sessions */
 	UFUNCTION(BlueprintCallable, Category = "EOS")
 	void DestroySession();
+
+	/** Show Friends UI */
+	UFUNCTION(BlueprintCallable, Category = "EOS")
+	void ShowFriendsUI();
+
+	/** Show Friends UI */
+	UFUNCTION(BlueprintCallable, Category = "EOS")
+	void ShowInviteUI();
 	
 	/* RETURN REFRENCE API */
 	

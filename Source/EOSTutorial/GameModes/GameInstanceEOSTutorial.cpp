@@ -130,9 +130,39 @@ void UGameInstanceEOSTutorial::DestroySession()
 	}
 }
 
+void UGameInstanceEOSTutorial::ShowFriendsUI()
+{
+	if (bIsLoggedIn)
+	{
+		IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+		if (OnlineSubystem)
+		{
+			if (IOnlineExternalUIPtr UIPtr = OnlineSubystem->GetExternalUIInterface())
+			{
+				UIPtr->ShowFriendsUI(0);
+			}
+		}
+	}
+}
+
+void UGameInstanceEOSTutorial::ShowInviteUI()
+{
+	if (bIsLoggedIn)
+	{
+		IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+		if (OnlineSubystem)
+		{
+			if (IOnlineExternalUIPtr UIPtr = OnlineSubystem->GetExternalUIInterface())
+			{
+				UIPtr->ShowInviteUI(0, EOSSessionName);
+			}
+		}
+	}
+}
+
 
 void UGameInstanceEOSTutorial::LoginWithEOSComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
-                                                  const FString& Error)
+                                                    const FString& Error)
 {
 	if(bWasSuccessful)
 	{
