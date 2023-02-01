@@ -90,6 +90,37 @@ void UGameInstanceEOSTutorial::CreateEOSSession(bool bIsDedicatedServer, bool bI
 	}
 }
 
+void UGameInstanceEOSTutorial::CreateEOSDedicatedSession(int32 NumberOfPuglicConnections)
+{
+	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
+	if (OnlineSubystem)
+	{
+		IOnlineSessionPtr SessionPtr = OnlineSubystem->GetSessionInterface();
+		if(SessionPtr.IsValid())
+		{
+			FOnlineSessionSettings SessionSettings;
+			//Setting properteis of sessions struct
+			SessionSettings.bIsDedicated = true;
+			SessionSettings.bShouldAdvertise = true;
+			SessionSettings.bAllowInvites = true;
+			SessionSettings.bIsLANMatch = false;
+			SessionSettings.NumPublicConnections = NumberOfPuglicConnections;
+			SessionSettings.bUsesPresence = false;
+			SessionSettings.bAllowJoinInProgress = false;
+			SessionSettings.bAllowJoinViaPresence = false;
+			SessionSettings.bAllowJoinViaPresenceFriendsOnly = false;
+			SessionSettings.bUseLobbiesIfAvailable = true;
+			SessionSettings.Set(SEARCH_KEYWORDS, EOSSessionKeyword, EOnlineDataAdvertisementType::ViaOnlineService);
+			
+			//Creating session
+			SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &UGameInstanceEOSTutorial::OnCreateDedicatedSessionComplete);
+			SessionPtr->CreateSession(0, EOSSessionName, SessionSettings);
+		}
+		
+	}
+}
+
+
 void UGameInstanceEOSTutorial::FindSessionAndJoin()
 {
 	IOnlineSubsystem *OnlineSubystem = Online::GetSubsystem(this->GetWorld());
@@ -208,6 +239,15 @@ void UGameInstanceEOSTutorial::OnCreateSessionComplete(FName SessionName, bool b
 	}
 }
 
+void UGameInstanceEOSTutorial::OnCreateDedicatedSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if(bWasSuccessful)
+	{
+		GetWorld()->ServerTravel(OpenDedicatedLevelLocationText);
+		UE_LOG(LogTemp, Warning, TEXT("Dedicated Session Sreatedd And Server Travel"));
+	}
+}
+
 void UGameInstanceEOSTutorial::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	if(bWasSuccessful)
@@ -256,7 +296,7 @@ void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
 				{
 					UE_LOG(LogTemp, Warning, TEXT("No Session Found"));
 					// IF no session is found then create one
-					CreateEOSSession(false, false, 10);
+					//CreateEOSSession(false, false, 10);
 				}
 				//Cears the session find delegate
 				SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
@@ -267,7 +307,7 @@ void UGameInstanceEOSTutorial::OnFindSessionComplete(bool bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Find Session Failed"));
 		// IF no session is found then create one
-		CreateEOSSession(false, false, 10);
+		//CreateEOSSession(false, false, 10);
 	}
 }
 

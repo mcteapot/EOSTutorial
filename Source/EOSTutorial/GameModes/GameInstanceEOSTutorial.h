@@ -26,6 +26,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite , Category = "EOS|Properties")
 	FString OpenLevelLocationText;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite , Category = "EOS|Properties")
+	FString OpenDedicatedLevelLocationText;
+	
 	UPROPERTY( BlueprintReadWrite , Category = "EOS|Properties")
 	FName EOSSessionName = "MainSession";
 
@@ -59,6 +62,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EOS")
 	void CreateEOSSession(bool bIsDedicatedServer, bool bIsLanServer, int32 NumberOfPuglicConnections);
 
+	/** Creates a EOS session on deidcated server or land server */
+	UFUNCTION(BlueprintCallable, Category = "EOS")
+	void CreateEOSDedicatedSession(int32 NumberOfPuglicConnections);
+	
 	/** Find a session to join */
 	UFUNCTION(BlueprintCallable, Category = "EOS")
 	void FindSessionAndJoin();
@@ -87,6 +94,9 @@ public:
 
 	/** Return for on create session compleated */
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	/** Return for on create session compleated */
+	void OnCreateDedicatedSessionComplete(FName SessionName, bool bWasSuccessful);
 
 	/** Return for on destroy session compleated */
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
